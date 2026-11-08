@@ -1,1 +1,1 @@
-# Sat-c-kar-analiz
+# Satici-kar-analiz
