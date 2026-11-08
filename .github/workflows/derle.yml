@@ -16,14 +16,31 @@ jobs:
           wget -q https://services.gradle.org/distributions/gradle-8.14.3-bin.zip
           unzip -q gradle-8.14.3-bin.zip -d "$HOME/gradle"
           echo "$HOME/gradle/gradle-8.14.3/bin" >> "$GITHUB_PATH"
-      - name: Ortam bilgisi
+      - name: Imza anahtarini hazirla
+        env:
+          KEYSTORE_B64: ${{ secrets.KEYSTORE_B64 }}
         run: |
-          java -version
-          echo "ANDROID_HOME=$ANDROID_HOME"
-          ls "$ANDROID_HOME/platforms" || true
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > app/upload.jks
+            echo "IMZA=1" >> "$GITHUB_ENV"
+          else
+            echo "KEYSTORE_B64 bulunamadi"
+          fi
       - name: Deneme APK
         run: gradle assembleDebug --no-daemon --stacktrace
+      - name: Play Store paketi
+        if: env.IMZA == '1'
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: gradle bundleRelease --no-daemon --stacktrace
       - uses: actions/upload-artifact@v4
         with:
           name: deneme-apk
           path: app/build/outputs/apk/debug/*.apk
+      - uses: actions/upload-artifact@v4
+        if: env.IMZA == '1'
+        with:
+          name: play-store-aab
+          path: app/build/outputs/bundle/release/*.aab
