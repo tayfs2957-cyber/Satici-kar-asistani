@@ -5,19 +5,22 @@ on:
   workflow_dispatch: {}
 jobs:
   derle:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Projeyi ac
         run: unzip -o proje.zip -d .
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '17'
-      - uses: android-actions/setup-android@v3
-      - uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '8.14.3'
+      - name: Java 17 ve Gradle hazirla
+        run: |
+          echo "JAVA_HOME=$JAVA_HOME_17_X64" >> "$GITHUB_ENV"
+          wget -q https://services.gradle.org/distributions/gradle-8.14.3-bin.zip
+          unzip -q gradle-8.14.3-bin.zip -d "$HOME/gradle"
+          echo "$HOME/gradle/gradle-8.14.3/bin" >> "$GITHUB_PATH"
+      - name: Ortam bilgisi
+        run: |
+          java -version
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          ls "$ANDROID_HOME/platforms" || true
       - name: Deneme APK
         run: gradle assembleDebug --no-daemon --stacktrace
       - uses: actions/upload-artifact@v4
